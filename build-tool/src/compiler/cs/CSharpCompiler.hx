@@ -59,6 +59,7 @@ class CSharpCompiler extends Compiler
 					'/warn:' + (warn ? '1' : '0'),
 					'/out:' + output + "." + (dll ? "dll" : "exe"),
 					'/target:' + (dll ? "library" : "exe") ];
+		this.arch = cmd.arch;
 		if(this.arch != null)
 			args.push('/platform:${this.arch}');
 		log('preparing cmd arguments:  ${args.join(" ")}');
