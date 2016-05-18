@@ -33,6 +33,7 @@ class CSharpCompiler extends Compiler
 	public function new(cmd:CommandLine)
 	{
 		this.cmd = cmd;
+		this.unsafe = cmd.unsafe;
 	}
 
 	private function log(str:String,?pos:haxe.PosInfos)
