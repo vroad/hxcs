@@ -25,6 +25,7 @@ class CSharpCompiler extends Compiler
 	public var libs(default, null):Array<{ name:String, hint:String }>;
 	public var csharpCompiler(default, null):Null<String>;
 	public var arch(default,null):Null<String>;
+	public var platform(default,null):Null<String>;
 
 	public var data(default, null):Data;
 
@@ -34,6 +35,7 @@ class CSharpCompiler extends Compiler
 	{
 		this.cmd = cmd;
 		this.unsafe = cmd.unsafe;
+		this.platform = cmd.platform;
 	}
 
 	private function log(str:String,?pos:haxe.PosInfos)
@@ -50,6 +52,8 @@ class CSharpCompiler extends Compiler
 			FileSystem.createDirectory("bin");
 		findCompiler();
 		writeProject();
+		if (cmd.noCompile)
+			return;
 
 		var output = cmd.output == null ? 'bin/' + this.name : Tools.addPath(data.baseDir, cmd.output),
 				outDir = haxe.io.Path.directory(output);

@@ -19,15 +19,28 @@ class CsProjWriter
 		if (versionStr.indexOf(".") < 0) {
 			versionStr += ".0";
 		}
-		var template = new Template( Resource.getString("csproj-template.mtt") );
+		var templateFile:String =
+		switch(compiler.platform)
+		{
+			case "android":
+				"android-csproj-template.mtt";
+			case "desktop":
+				"csproj-template.mtt";
+			case _:
+				"csproj-template.mtt";
+		}
+		var template = new Template( Resource.getString(templateFile) );
 		stream.writeString(template.execute( {
 			outputType : (compiler.dll ? "Library" : "Exe"),
 			name : compiler.name,
 			targetFramework : versionStr,
 			unsafe : compiler.unsafe,
 			refs : compiler.libs,
+			native_libs : compiler.data.nativeLibs,
 			srcs : compiler.data.modules.map(function(m) return "src\\" + m.path.split(".").join("\\") + ".cs"),
-			res : compiler.data.resources.map(function(res) return "src\\Resources\\" + haxe.crypto.Base64.encode(haxe.io.Bytes.ofString(res)))
+			res : compiler.data.resources.map(function(res) return "src\\Resources\\" + haxe.crypto.Base64.encode(haxe.io.Bytes.ofString(res))),
+			android_resources : compiler.data.androidResources,
+			android_assets : compiler.data.androidAssets
 		} ));
 	}
 

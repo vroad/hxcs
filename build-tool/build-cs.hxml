@@ -4,3 +4,4 @@
 -main Main
 -D target_cs
 -resource csproj-template.mtt
+-resource android-csproj-template.mtt
