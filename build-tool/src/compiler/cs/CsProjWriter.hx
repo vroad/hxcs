@@ -15,10 +15,18 @@ class CsProjWriter
 
 	public function write(compiler:CSharpCompiler):Void
 	{
-		var versionStr : String = (compiler.version == null ? "3.5" : Std.string(compiler.version / 10));
-		if (versionStr.indexOf(".") < 0) {
+		var versionStr : String;
+		var clientStr : String = compiler.version >= 45 ? "" : "Client";
+		if (compiler.version == null)
+			versionStr = "3.5";
+		else if (compiler.version == 461)
+			versionStr = "4.6.1";
+		else
+			versionStr = Std.string(compiler.version / 10);
+		
+		if (versionStr.indexOf(".") < 0)
 			versionStr += ".0";
-		}
+		
 		var templateFile:String =
 		switch(compiler.platform)
 		{
@@ -47,6 +55,7 @@ class CsProjWriter
 			outputType : (compiler.dll ? "Library" : "Exe"),
 			name : compiler.name,
 			targetFramework : versionStr,
+			client: clientStr,
 			unsafe : compiler.unsafe,
 			refs : compiler.libs,
 			native_libs : compiler.data.nativeLibs,

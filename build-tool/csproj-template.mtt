@@ -8,7 +8,7 @@
     <RootNamespace></RootNamespace>
     <AssemblyName>::name::</AssemblyName>
     <TargetFrameworkVersion>v::targetFramework::</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkProfile>::client::</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
 	::if unsafe::
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
