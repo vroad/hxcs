@@ -2,6 +2,7 @@ package compiler.cs;
 import compiler.Compiler;
 import compiler.Error;
 import haxe.io.BytesOutput;
+import haxe.io.Path;
 import input.Data;
 import sys.FileSystem;
 import sys.io.File;
@@ -23,7 +24,9 @@ class CSharpCompiler extends Compiler
 	public var dll(default, null):Bool;
 	public var name(default, null):String;
 	public var libs(default, null):Array<{ name:String, hint:String }>;
+	#if 0
 	public var csharpCompiler(default, null):Null<String>;
+	#end
 	public var arch(default,null):Null<String>;
 	public var platform(default,null):Null<String>;
 
@@ -50,13 +53,17 @@ class CSharpCompiler extends Compiler
 		preProcess();
 		if (!FileSystem.exists("bin"))
 			FileSystem.createDirectory("bin");
+		#if 0
 		findCompiler();
+		#end
+		findMSBuild();
 		writeProject();
 		if (cmd.noCompile)
 			return;
 
 		var output = cmd.output == null ? 'bin/' + this.name : Tools.addPath(data.baseDir, cmd.output),
 				outDir = haxe.io.Path.directory(output);
+		#if 0
 		var args = ['/nologo',
 					'/optimize' + (debug ? '-' : '+'),
 					'/debug' + (debug ? '+' : '-'),
@@ -64,16 +71,22 @@ class CSharpCompiler extends Compiler
 					'/warn:' + (warn ? '1' : '0'),
 					'/out:' + output + "." + (dll ? "dll" : "exe"),
 					'/target:' + (dll ? "library" : "exe") ];
+		#end
+		var args = ['/p:Configuration=' + (debug ? "Debug" : "Release"),
+					'/p:OutputPath=' + outDir,
+					'/p:AssemblyName=' + haxe.io.Path.withoutDirectory(output)];
 		this.arch = cmd.arch;
 		if(this.arch != null)
-			args.push('/platform:${this.arch}');
+			args.push('/p:Platform=${this.arch}');
 		log('preparing cmd arguments:  ${args.join(" ")}');
+		#if 0
 		if (data.main != null && !dll) {
 			var idx = data.main.lastIndexOf(".");
 			var namespace = data.main.substring(0, idx + 1);
 			var main = data.main.substring(idx + 1);
 			args.push('/main:' + namespace + (main == "Main" ? "EntryPoint__Main" : main));
 		}
+		#end
 		for (ref in libs)
 		{
 			if (ref.hint != null)
@@ -82,19 +95,27 @@ class CSharpCompiler extends Compiler
 				    mypath = Tools.addPath(outDir, haxe.io.Path.withoutDirectory(ref.hint));
 				Tools.copyIfNewer(fullpath, mypath);
 
+				#if 0
 				args.push('/reference:$mypath');
+				#end
 			}
 		}
 		for (res in data.resources) {
 			res = haxe.io.Path.escape(res, true);
 			// res = haxe.crypto.Base64.encode(haxe.io.Bytes.ofString(res));
+			#if 0
 			args.push('/res:src' + delim + 'Resources' + delim + res + ",src.Resources." + res);
+			#end
 		}
+		#if 0
 		for (file in data.modules)
 			args.push("src" + delim + file.path.split(".").join(delim) + ".cs");
+		#end
 
+		#if 0
 		for (opt in data.opts)
 			args.push(opt);
+		#end
 
 		log('cmd arguments:  ${args.join(" ")}');
 		var ret = 0;
@@ -108,7 +129,7 @@ class CSharpCompiler extends Compiler
 			}
 			if (verbose)
 				Sys.println(this.path + this.compiler + " " + args.join(" "));
-			ret = Sys.command(this.path + this.compiler + (Sys.systemName() == "Windows" ? (this.compiler == "csc" ? ".exe" : ".bat") : ""), args);
+			ret = Sys.command(this.path + this.compiler + (Sys.systemName() == "Windows" ? ".exe" : ""), args);
 		}
 		catch (e:Dynamic)
 		{
@@ -135,6 +156,7 @@ class CSharpCompiler extends Compiler
 		File.saveBytes(this.name + ".csproj", bytes);
 	}
 
+	#if 0
 	private function findCompiler()
 	{
 		if (csharpCompiler == null) {
@@ -179,6 +201,63 @@ class CSharpCompiler extends Compiler
 		 	throw Error.CompilerNotFound;
 		}
 	}
+	#end
+	
+	private function findMSBuild()
+	{
+		log('finding MSBuild...');
+		
+		if (Sys.systemName() == "Windows")
+		{
+			var process = new Process("reg", ["query", "HKLM\\SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\4.0", "/v", "MSBuildToolsPath"]);
+			if (process.exitCode() == 0)
+			{
+				var lineCount = 0;
+				var line;
+				do
+				{
+					line = process.stdout.readLine();
+					if (line != "")
+					{
+						if (lineCount == 1)
+							break;
+						lineCount++;
+					}
+				} while (true);
+				var queryResult = line.split("    ");
+				var msBuildDir = Path.removeTrailingSlashes(queryResult[queryResult.length - 1]) + "\\";
+				trace(msBuildDir);
+				trace(msBuildDir + "/" + "MSBuild.exe");
+				if (FileSystem.exists (msBuildDir + "MSBuild.exe"))
+				{
+					path = msBuildDir;
+					compiler = "MSBuild";
+					log('Found MSBuild');
+				}
+			}
+			process.close();
+		}
+		else
+		{
+			if (exists("xbuild"))
+			{
+				path = "";
+				compiler = "xbuild";
+				log('Found xbuild');
+			}
+			else if (exists("msbuild"))
+			{
+				path = "";
+				compiler = "msbuild";
+				log('Found MSBuild');
+			}
+		}
+		
+		if (path == null)
+		{
+			throw Error.CompilerNotFound;
+		}
+	}
 
 	private function exists(exe:String, checkArgs:Array<String> = null):Bool
 	{
@@ -196,7 +275,9 @@ class CSharpCompiler extends Compiler
 		{
 			var ret = new Process(exe, checkArgs);
 			ret.stdout.readAll();
-			return ret.exitCode() == 0;
+			var exitCode = ret.exitCode();
+			ret.close();
+			return exitCode == 0;
 		}
 		catch (e:Dynamic)
 		{
@@ -274,7 +355,9 @@ class CSharpCompiler extends Compiler
 		this.version = version;
 
 		// get requested csharp compiler
+		#if 0
 		this.csharpCompiler = data.definesData.get("csharp-compiler");
+		#end
 
 		//get important defined vars
 		this.silverlight = data.defines.exists("silverlight");
