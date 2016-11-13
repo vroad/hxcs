@@ -209,7 +209,7 @@ class CSharpCompiler extends Compiler
 		
 		if (Sys.systemName() == "Windows")
 		{
-			var process = new Process("reg", ["query", "HKLM\\SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\4.0", "/v", "MSBuildToolsPath"]);
+			var process = new Process("reg", ["query", "HKLM\\SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\14.0", "/v", "MSBuildToolsPath"]);
 			if (process.exitCode() == 0)
 			{
 				var lineCount = 0;
