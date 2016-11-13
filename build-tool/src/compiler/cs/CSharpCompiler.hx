@@ -226,8 +226,6 @@ class CSharpCompiler extends Compiler
 				} while (true);
 				var queryResult = line.split("    ");
 				var msBuildDir = Path.removeTrailingSlashes(queryResult[queryResult.length - 1]) + "\\";
-				trace(msBuildDir);
-				trace(msBuildDir + "/" + "MSBuild.exe");
 				if (FileSystem.exists (msBuildDir + "MSBuild.exe"))
 				{
 					path = msBuildDir;
